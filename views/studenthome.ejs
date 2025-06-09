@@ -1,1 +1,11 @@
-<h1>Enrolled courses</h1>
+<%- include('notifications.ejs') %>
+<div class="mb-6">
+    <p class="text-lg font-semibold text-gray-700 mb-2">Enrolled courses:</p>
+    <!-- Add enrolled courses here if available -->
+    <p class="text-lg font-semibold text-gray-700 mb-2">Available courses:</p>
+    <ul class="list-disc list-inside space-y-1">
+        <% for (let course of availCourses) { %>
+            <li class="text-gray-800"><%= course.name %></li>
+        <% } %>
+    </ul>
+</div>

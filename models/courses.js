@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Courses.belongsTo(models.User, {
+        foreignKey: 'creatorId',
+        onDelete: 'CASCADE'
+      });
       Courses.hasMany(models.Chapters, {
         foreignKey: 'courseId',
         onDelete: 'CASCADE'
@@ -18,7 +22,11 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Courses.init({
-    name: DataTypes.STRING
+    name: DataTypes.STRING,
+    creatorId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    }
   }, {
     sequelize,
     modelName: 'Courses',

@@ -1,12 +1,29 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 	<head>
 		<title>Home</title>
-		<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<script src="https://cdn.tailwindcss.com"></script>
 	</head>
-	<body>
-		<h1>Home</h1>
-		<%- include('notifications.ejs') %>
-		<a href="/signup">Sign up</a>
-		<a href="/signin">Sign in</a>
+	<body class="bg-gray-100 min-h-screen flex flex-col items-center">
+		<div
+			class="w-full max-w-md mt-20 bg-white rounded-lg shadow-lg p-8 text-center"
+		>
+			<h1 class="text-3xl font-bold mb-6 text-gray-800">Welcome to LMS</h1>
+			<%- include('notifications.ejs') %>
+			<div class="flex justify-center space-x-4">
+				<a
+					href="/signup"
+					class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition font-semibold"
+					>Sign up</a
+				>
+				<a
+					href="/signin"
+					class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition font-semibold"
+					>Sign in</a
+				>
+			</div>
+		</div>
 	</body>
 </html>

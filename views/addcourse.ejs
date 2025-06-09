@@ -1,37 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Login</title>
+		<title>Add Course</title>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<script src="https://cdn.tailwindcss.com"></script>
 	</head>
 	<body class="bg-gray-100 min-h-screen flex flex-col items-center">
-		<div class="w-full max-w-md mt-20 bg-white rounded-lg shadow-lg p-8">
-			<h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Login</h1>
+		<div class="w-full max-w-md mt-10 bg-white rounded-lg shadow-lg p-8">
+			<h1 class="text-2xl font-bold mb-6 text-center text-gray-800">
+				Add Course
+			</h1>
 			<%- include('notifications.ejs') %>
-			<form action="/signin" method="post" class="space-y-5">
+			<form action="/createnewcourse" method="POST" class="space-y-5">
 				<input type="hidden" name="_csrf" value="<%= csrfToken %>" />
 				<div>
-					<label for="email" class="block text-gray-700 font-medium mb-1"
-						>Email</label
+					<label for="name" class="block text-gray-700 font-medium mb-1"
+						>Course name:</label
 					>
 					<input
-						type="email"
-						name="email"
-						id="email"
-						required
-						class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-					/>
-				</div>
-				<div>
-					<label for="password" class="block text-gray-700 font-medium mb-1"
-						>Password</label
-					>
-					<input
-						type="password"
-						name="password"
-						id="password"
+						type="text"
+						id="name"
+						name="name"
 						required
 						class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
 					/>
@@ -40,7 +30,7 @@
 					type="submit"
 					class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition font-semibold"
 				>
-					Login
+					Create course
 				</button>
 			</form>
 		</div>

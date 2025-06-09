@@ -1,3 +1,4 @@
+// 🔁 All the imports (same as your current setup)
 const express = require("express");
 const app = express();
 const path = require("path");
@@ -11,12 +12,13 @@ const bcrypt = require("bcrypt");
 const csrf = require("csurf");
 const connectEnsureLogin = require("connect-ensure-login");
 
-const { User, Course, Chapter, Page } = require("./models");
+const { User, Courses, Chapters, Pages } = require("./models");
 const user = require("./models/user");
+const { title } = require("process");
 
 const saltRounds = 10;
 
-// Middleware setup
+// 📦 Middleware setup
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
@@ -45,7 +47,22 @@ app.use((req, res, next) => {
     next();
 });
 
-// Passport strategy
+// Remove or comment out this debug logger for production
+// app.use((req, res, next) => {
+//     console.log(`[${req.method}] ${req.url}`);
+//     next();
+// });
+
+app.use((err, req, res, next) => {
+    if (err.code === 'EBADCSRFTOKEN') {
+        console.error("❌ CSRF validation failed");
+        res.status(403).send("Invalid CSRF token");
+    } else {
+        next(err);
+    }
+});
+
+// 🔐 Passport strategy
 passport.use(
     new LocalStrategy(
         { usernameField: "email" },
@@ -80,16 +97,16 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
-// Middleware to restrict publisher-only access
+// 🔐 Middleware to restrict publisher-only access
 function requirePublisher(req, res, next) {
-    if (req.user && req.user.role === 'publisher') {
+    if (req.user && req.user.role === 'educator') {
         return next();
     } else {
         return res.status(401).json({ message: 'Unauthorized user.' });
     }
 }
 
-// Routes
+// 🛣️ Routes
 app.get("/", (req, res) => {
     res.render("index");
 });
@@ -129,13 +146,20 @@ app.post(
     })
 );
 
-app.get("/dashboard", connectEnsureLogin.ensureLoggedIn("/signin"), (req, res) => {
-    res.render("dashboard", { user: req.user });
-});
-
-
-app.get("/new-blog-post", connectEnsureLogin.ensureLoggedIn("/signin"), requirePublisher, (req, res) => {
-    res.json({ message: "You can create new blog post." });
+app.get("/dashboard", connectEnsureLogin.ensureLoggedIn("/signin"), async (req, res) => {
+    try {
+        const allCourses = await Courses.findAll();
+        res.render("dashboard", {
+            user: req.user,
+            csrfToken: req.csrfToken(),
+            availCourses: allCourses,
+            messages: req.flash()
+        });
+    } catch (error) {
+        console.error("Error fetching courses:", error);
+        req.flash("error", "Could not load courses.");
+        res.redirect("/");
+    }
 });
 
 app.get("/signout", (req, res, next) => {
@@ -145,6 +169,120 @@ app.get("/signout", (req, res, next) => {
         }
         res.redirect("/");
     });
+});
+
+app.get("/createnewcourse", connectEnsureLogin.ensureLoggedIn("/signin"), requirePublisher, (req, res) => {
+    res.render("addcourse", { user: req.user, csrfToken: req.csrfToken() });
+});
+
+app.post("/createnewcourse", connectEnsureLogin.ensureLoggedIn("/signin"), requirePublisher, async (req, res) => {
+    try {
+        const course = await Courses.create({
+            name: req.body.name,
+            creatorId: req.user.id,
+        });
+
+        req.flash("success", "Course created successfully.");
+        res.redirect("/addchapters");
+    } catch (error) {
+        console.error("Course creation failed:", error);
+        req.flash("error", "Course creation failed. Check input and try again.");
+        res.redirect("/createnewcourse");
+    }
+});
+
+app.get("/addchapters", connectEnsureLogin.ensureLoggedIn("/signin"), requirePublisher, async (req, res) => {
+    let myCourses = await getCourse(req);
+    res.render("addchapters", { myCourses: myCourses, user: req.user, csrfToken: req.csrfToken(), messages: req.flash(), });
+});
+
+app.post("/addchapters", connectEnsureLogin.ensureLoggedIn("/signin"), requirePublisher, async (req, res) => {
+    try {
+        const course = await Courses.findOne({ where: { name: req.body.courseName } });
+        if (!course) throw new Error("Course not found");
+
+        await Chapters.create({
+            name: req.body.chapterName,
+            description: req.body.description,
+            courseId: course.id,
+        });
+
+        req.flash("success", "Chapter created successfully.");
+        // ✅ Pass courseId in query string to /addpages
+        res.redirect(`/addpages?courseId=${course.id}`);
+    } catch (error) {
+        console.error("❌ Chapter creation failed:", error);
+        req.flash("error", "Chapter creation failed.");
+        res.redirect("/addchapters");
+    }
+});
+
+app.get("/addpages", connectEnsureLogin.ensureLoggedIn("/signin"), requirePublisher, async (req, res) => {
+    try {
+        const courseId = req.query.courseId;
+        const myChapters = await getChapters(req, courseId);
+
+        res.render("addpages", {
+            user: req.user,
+            csrfToken: req.csrfToken(),
+            myChapters: myChapters,
+            courseId: courseId,
+            messages: req.flash(),
+        });
+    } catch (error) {
+        console.error("❌ Error loading /addpages:", error);
+        req.flash("error", "Missing or invalid course.");
+        res.redirect("/dashboard");
+    }
+});
+
+app.post("/addpages", connectEnsureLogin.ensureLoggedIn("/signin"), requirePublisher, async (req, res) => {
+    try {
+        const courseId = req.body.courseId;
+        const chapterId = req.body.chapterId;
+        const title = req.body.title;
+        const content = req.body.content;
+
+        if (!courseId || !chapterId || !title || !content) {
+            throw new Error("Missing required fields");
+        }
+
+        await Pages.create({
+            title: title,
+            content: content,
+            chapterId: chapterId,
+        });
+
+        req.flash("success", "Page created successfully.");
+        return res.redirect(`/mycourses`);
+    } catch (error) {
+        console.error("❌ Fatal error in POST /addpages:", error);
+        req.flash("error", "Page creation failed.");
+        return res.redirect(`/addpages?courseId=${req.body.courseId || ''}`);
+    }
+});
+
+// 📦 Helper functions
+async function getCourse(req) {
+    return await Courses.findAll({ where: { creatorId: req.user.id } });
+}
+
+async function getChapters(req, cId) {
+    const courseId = cId || req.query.courseId;
+    if (!courseId) throw new Error("Missing courseId in query");
+
+    return await Chapters.findAll({ where: { courseId } });
+}
+
+// Remove or comment out this debug middleware for production
+// app.use("/addpages", (req, res, next) => {
+//     console.log("🛡️ Middleware saw request:", req.method, req.path);
+//     next();
+// });
+
+app.get("/mycourses", connectEnsureLogin.ensureLoggedIn("/signin"), requirePublisher, async (req, res) => {
+    let myCourses = await getCourse(req);
+    res.render("mycourses", { user: req.user, csrfToken: req.csrfToken(), myCourses: myCourses, messages: req.flash() });
 });
 
 module.exports = app;
