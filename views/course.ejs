@@ -65,10 +65,16 @@
             <% } %>
         </ul>
         <% if (user.role === 'student' && isEnrolled) { %>
-          <div class="mb-4">
-            <p class="text-green-700 font-semibold">Progress: <%= progress %>%</p>
-          </div>
-        <% } %>
+  <div class="mb-4">
+    <p class="text-green-700 font-semibold">Progress: <%= progress %>%</p>
+  </div>
+<% } else { %>
+  <form action="/enroll/<%= course.id %>" method="POST" class="inline ml-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-sm">Enroll</button>
+  </form>
+<% } %>
+
     </div>
 </body>
 </html>

@@ -2,19 +2,41 @@
   <p class="text-lg font-semibold text-gray-700 mb-2">Enrolled courses:</p>
   <ul class="list-disc list-inside space-y-1">
     <% for (let course of enrolledCourses) { %>
-      <li class="text-gray-800"><a href="/courses/<%= course.id %>" class="hover:underline"><%= course.name %></a></li>
-    <% } %>
-  </ul>
-  <p class="text-lg font-semibold text-gray-700 mb-2 mt-6">Available courses:</p>
-  <ul class="list-disc list-inside space-y-1">
-    <% for (let course of availableCourses) { %>
-      <li class="text-gray-800 flex items-center justify-between">
+      <li class="text-gray-800">
         <a href="/courses/<%= course.id %>" class="hover:underline"><%= course.name %></a>
-        <form action="/enroll/<%= course.id %>" method="POST" class="inline ml-4">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <button type="submit" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-sm">Enroll</button>
-        </form>
       </li>
     <% } %>
   </ul>
+
+  <p class="text-lg font-semibold text-gray-700 mb-2 mt-6">Available courses:</p>
+
+  <!-- 🔍 Search Bar -->
+  <input id="courseSearch" onkeyup="filterCourses()" type="text"
+         placeholder="Search available courses"
+         class="mb-4 px-3 py-2 border border-gray-300 rounded w-full" />
+
+  <!-- ✅ Only one list -->
+  <ul id="availableCoursesList" class="space-y-2">
+    <% availableCourses.forEach(course => { %>
+      <li>
+        <a href="/courses/<%= course.id %>" class="text-blue-700 hover:underline font-semibold">
+          <%= course.name %>
+        </a>
+      </li>
+    <% }) %>
+  </ul>
+
+  <script>
+    function filterCourses() {
+      const input = document.getElementById('courseSearch');
+      const filter = input.value.toLowerCase();
+      const courseList = document.getElementById('availableCoursesList');
+      const items = courseList.getElementsByTagName('li');
+
+      for (let i = 0; i < items.length; i++) {
+        const txt = items[i].textContent || items[i].innerText;
+        items[i].style.display = txt.toLowerCase().includes(filter) ? "" : "none";
+      }
+    }
+  </script>
 </div>

@@ -8,14 +8,40 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex flex-col items-center">
-  <div class="w-full max-w-md mt-10 bg-white rounded-lg shadow-lg p-8">
-    <h1 class="text-2xl font-bold mb-6 text-center text-blue-800">My Courses</h1>
+  <div class="w-full max-w-2xl mt-10 bg-white rounded-lg shadow-lg p-8">
+    <h1 class="text-3xl font-bold mb-6 text-center text-blue-800">My Courses</h1>
     <%- include('notifications.ejs') %>
-    <ul class="list-disc list-inside space-y-2">
-      <% for (let course of myCourses) { %>
-        <li class="text-gray-800"><a href="/courses/<%= course.id %>" class="hover:underline"><%= course.name %></a></li>
-      <% } %>
+    <!-- Educator Search Bar -->
+    <div class="mb-4 flex justify-center">
+      <input
+        type="text"
+        id="myCourseSearch"
+        placeholder="Search my courses..."
+        class="px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 w-64"
+        onkeyup="filterMyCourses()"
+      />
+    </div>
+    <!-- My Courses List -->
+    <ul id="myCoursesList" class="space-y-2">
+      <% myCourses.forEach(course => { %>
+        <li>
+          <a href="/courses/<%= course.id %>" class="text-blue-700 hover:underline font-semibold"><%= course.name %></a>
+        </li>
+      <% }) %>
     </ul>
+    <script>
+      function filterMyCourses() {
+        const input = document.getElementById('myCourseSearch');
+        const filter = input.value.toLowerCase();
+        const courseList = document.getElementById('myCoursesList');
+        if (!courseList) return;
+        const items = courseList.getElementsByTagName('li');
+        for (let i = 0; i < items.length; i++) {
+          const txt = items[i].textContent || items[i].innerText;
+          items[i].style.display = txt.toLowerCase().includes(filter) ? "" : "none";
+        }
+      }
+    </script>
   </div>
 </body>
 </html>
