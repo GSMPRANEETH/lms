@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Login</title>
+		<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+	</head>
+	<body>
+		<h1>Login</h1>
+		<%- include('notifications.ejs') %>
+		<form action="/signin" method="post">
+			<input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+			<label for="email">Email</label>
+			<input type="email" name="email" id="email" />
+			<label for="password">Password</label>
+			<input type="password" name="password" id="password" />
+			<button type="submit">Login</button>
+		</form>
+	</body>
+</html>
