@@ -12,7 +12,7 @@
         <%- include('notifications.ejs') %>
         <ul class="list-disc list-inside space-y-2">
             <% for (let course of myCourses) { %>
-                <li class="text-gray-800"><%= course.name %></li>
+                <li class="text-gray-800"><a href="/courses/<%= course.id %>"><%= course.name %></a></li>
             <% } %>
         </ul>
     </div>

@@ -12,7 +12,7 @@ const bcrypt = require("bcrypt");
 const csrf = require("csurf");
 const connectEnsureLogin = require("connect-ensure-login");
 
-const { User, Courses, Chapters, Pages } = require("./models");
+const { User, Courses, Chapters, Pages, Enrollments, Completions } = require("./models");
 const user = require("./models/user");
 const { title } = require("process");
 
@@ -106,8 +106,20 @@ function requirePublisher(req, res, next) {
     }
 }
 
+// 🔐 Middleware to restrict student-only access
+function requireStudent(req, res, next) {
+    if (req.user && req.user.role === 'student') {
+        return next();
+    } else {
+        return res.status(401).json({ message: 'Unauthorized user.' });
+    }
+}
+
 // 🛣️ Routes
 app.get("/", (req, res) => {
+    if (req.isAuthenticated && req.isAuthenticated()) {
+        return res.redirect("/dashboard");
+    }
     res.render("index");
 });
 
@@ -148,11 +160,30 @@ app.post(
 
 app.get("/dashboard", connectEnsureLogin.ensureLoggedIn("/signin"), async (req, res) => {
     try {
-        const allCourses = await Courses.findAll();
+        // 1. Get all enrolled course IDs for this user
+        const enrolledRows = await Enrollments.findAll({
+            where: { userId: req.user.id },
+            attributes: ['courseId']
+        });
+        const enrolledCourseIds = enrolledRows.map(row => row.courseId);
+
+        // 2. Get enrolled courses
+        const enrolledCourses = await Courses.findAll({
+            where: { id: enrolledCourseIds }
+        });
+
+        // 3. Get available (not enrolled) courses
+        const availableCourses = await Courses.findAll({
+            where: {
+                id: { [require('sequelize').Op.notIn]: enrolledCourseIds }
+            }
+        });
+
         res.render("dashboard", {
             user: req.user,
             csrfToken: req.csrfToken(),
-            availCourses: allCourses,
+            enrolledCourses,
+            availableCourses,
             messages: req.flash()
         });
     } catch (error) {
@@ -220,7 +251,10 @@ app.post("/addchapters", connectEnsureLogin.ensureLoggedIn("/signin"), requirePu
 app.get("/addpages", connectEnsureLogin.ensureLoggedIn("/signin"), requirePublisher, async (req, res) => {
     try {
         const courseId = req.query.courseId;
-        const myChapters = await getChapters(req, courseId);
+        const myChapters = await Chapters.findAll({
+            where: { courseId },
+            include: [{ model: Pages }]
+        });
 
         res.render("addpages", {
             user: req.user,
@@ -262,6 +296,104 @@ app.post("/addpages", connectEnsureLogin.ensureLoggedIn("/signin"), requirePubli
     }
 });
 
+// Show update password form
+app.get('/update-password', connectEnsureLogin.ensureLoggedIn('/signin'), (req, res) => {
+    res.render('update-password', { csrfToken: req.csrfToken(), user: req.user, messages: req.flash() });
+});
+
+// Handle update password form submission
+app.post('/update-password', connectEnsureLogin.ensureLoggedIn('/signin'), async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findByPk(req.user.id);
+    const valid = await bcrypt.compare(oldPassword, user.password);
+    if (!valid) {
+        req.flash('error', 'Old password incorrect');
+        return res.redirect('/update-password');
+    }
+    user.password = await bcrypt.hash(newPassword, saltRounds);
+    await user.save();
+    req.flash('success', 'Password updated');
+    res.redirect('/dashboard');
+});
+
+// Enroll in a course
+app.post('/enroll/:courseId', connectEnsureLogin.ensureLoggedIn('/signin'), requireStudent, async (req, res) => {
+    try {
+        // Prevent duplicate enrollments
+        const [enrollment, created] = await Enrollments.findOrCreate({
+            where: { userId: req.user.id, courseId: req.params.courseId }
+        });
+        if (created) {
+            req.flash('success', 'Enrolled successfully!');
+        } else {
+            req.flash('info', 'You are already enrolled in this course.');
+        }
+        res.redirect('/dashboard');
+    } catch (error) {
+        console.error("Enrollment error:", error);
+        req.flash('error', 'Could not enroll in course.');
+        res.redirect('/dashboard');
+    }
+});
+
+// Show a specific page
+app.get('/pages/:pageId', connectEnsureLogin.ensureLoggedIn('/signin'), async (req, res) => {
+    try {
+        const page = await Pages.findByPk(req.params.pageId, {
+            include: [{ model: Chapters }]
+        });
+        if (!page) {
+            req.flash('error', 'Page not found');
+            return res.redirect('back');
+        }
+        const chapter = page.Chapter;
+        const course = await Courses.findByPk(chapter.courseId);
+
+        // Only allow educator (creator) or enrolled student
+        let allowed = false;
+        if (req.user.role === 'educator' && course.creatorId === req.user.id) {
+            allowed = true;
+        } else if (req.user.role === 'student') {
+            const enrollment = await Enrollments.findOne({
+                where: { userId: req.user.id, courseId: course.id }
+            });
+            allowed = !!enrollment;
+        }
+        if (!allowed) {
+            req.flash('error', 'You are not authorized to view this course.');
+            return res.redirect('/dashboard');
+        }
+
+        res.render('page', {
+            user: req.user,
+            csrfToken: req.csrfToken(),
+            page,
+            chapter,
+            course,
+            messages: req.flash()
+        });
+    } catch (error) {
+        console.error("Error loading page:", error);
+        req.flash('error', 'Could not load page.');
+        res.redirect('back');
+    }
+});
+
+// Mark a page as complete
+app.post('/pages/:pageId/complete', connectEnsureLogin.ensureLoggedIn('/signin'), requireStudent, async (req, res) => {
+    try {
+        const pageId = req.params.pageId;
+        const userId = req.user.id;
+        await Completions.findOrCreate({ where: { userId, pageId } });
+        req.flash('success', 'Page marked as complete!');
+        res.redirect(`/pages/${pageId}`);
+    } catch (error) {
+        console.error("Completion error:", error);
+        req.flash('error', 'Could not mark as complete.');
+        res.redirect(`/pages/${req.params.pageId}`);
+    }
+});
+
 // 📦 Helper functions
 async function getCourse(req) {
     return await Courses.findAll({ where: { creatorId: req.user.id } });
@@ -280,9 +412,90 @@ async function getChapters(req, cId) {
 //     next();
 // });
 
-app.get("/mycourses", connectEnsureLogin.ensureLoggedIn("/signin"), requirePublisher, async (req, res) => {
+app.get("/mycourses", connectEnsureLogin.ensureLoggedIn("/signin"), async (req, res) => {
     let myCourses = await getCourse(req);
     res.render("mycourses", { user: req.user, csrfToken: req.csrfToken(), myCourses: myCourses, messages: req.flash() });
 });
+
+// Route to view a specific course and its chapters
+app.get("/courses/:courseId", connectEnsureLogin.ensureLoggedIn("/signin"), async (req, res) => {
+    const courseId = req.params.courseId;
+    const course = await Courses.findByPk(courseId);
+    if (!course) return res.status(404).send("Course not found");
+
+    const myChapters = await Chapters.findAll({
+        where: { courseId },
+        include: [{ model: Pages }]
+    });
+
+    // Check if user is educator (creator)
+    const isEducator = req.user.role === 'educator' && course.creatorId === req.user.id;
+
+    // Check if user is enrolled
+    let isEnrolled = false;
+    let completedPageIds = [];
+    let progress = 0;
+
+    if (req.user.role === 'student') {
+        const enrollment = await Enrollments.findOne({
+            where: { userId: req.user.id, courseId }
+        });
+        isEnrolled = !!enrollment;
+
+        // Progress calculation
+        if (isEnrolled) {
+            // Get all page IDs for this course
+            const allPages = await Pages.findAll({
+                include: [{ model: Chapters, where: { courseId } }],
+                attributes: ['id']
+            });
+            const allPageIds = allPages.map(p => p.id);
+
+            // Get completed page IDs for this user
+            const completions = await Completions.findAll({
+                where: { userId: req.user.id, pageId: allPageIds },
+                attributes: ['pageId']
+            });
+            completedPageIds = completions.map(c => c.pageId);
+
+            progress = allPageIds.length > 0
+                ? Math.round((completedPageIds.length / allPageIds.length) * 100)
+                : 0;
+        }
+    }
+
+    res.render("course", {
+        user: req.user,
+        csrfToken: req.csrfToken(),
+        myChapters,
+        course,
+        isEducator,
+        isEnrolled,
+        progress,
+        completedPageIds
+    });
+});
+
+app.get('/reports', connectEnsureLogin.ensureLoggedIn('/signin'), requirePublisher, async (req, res) => {
+    try {
+        // Get all courses created by this educator
+        const courses = await Courses.findAll({ where: { creatorId: req.user.id } });
+
+        // For each course, count enrollments
+        const reports = await Promise.all(
+            courses.map(async course => {
+                const count = await Enrollments.count({ where: { courseId: course.id } });
+                return { course, count };
+            })
+        );
+
+        res.render('reports', { user: req.user, reports, csrfToken: req.csrfToken(), messages: req.flash() });
+    } catch (error) {
+        console.error("Error loading reports:", error);
+        req.flash("error", "Could not load reports.");
+        res.redirect('/dashboard');
+    }
+});
+
 
 module.exports = app;

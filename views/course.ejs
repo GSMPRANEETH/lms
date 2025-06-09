@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Course</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center">
+    <div class="w-full max-w-md mt-10 bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800"><%= course.name %></h1>
+        <%- include('notifications.ejs') %>
+        <p class="text-lg font-semibold text-gray-700 mb-2">Course:</p>
+        <p class="text-gray-800"><%= course.name %></p>
+        <p class="text-lg font-semibold text-gray-700 mb-2">Chapters:</p>
+        <ul class="list-disc list-inside space-y-2">
+            <% for (let chapter of myChapters) { %>
+                <li class="text-gray-800 mb-2">
+                    <div class="font-semibold"><%= chapter.name %></div>
+                    <div class="text-sm text-gray-500 ml-4 mb-2"><%= chapter.description %></div>
+                    <% if ((isEducator || isEnrolled) && chapter.Pages && chapter.Pages.length > 0) { %>
+                        <ul class="ml-6 list-decimal">
+                            <% chapter.Pages.forEach(page => { %>
+                                <li>
+                                    <a href="/pages/<%= page.id %>" class="text-blue-600 hover:underline"><%= page.title %></a>
+                                    <% if (user.role === 'student' && completedPageIds && completedPageIds.includes(page.id)) { %>
+                                        <span class="ml-2 text-green-600 text-xs font-semibold">(Completed)</span>
+                                    <% } %>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    <% } else if (chapter.Pages && chapter.Pages.length > 0) { %>
+                        <div class="ml-6 text-gray-400 text-sm">Pages are only visible to enrolled students and the educator.</div>
+                    <% } else { %>
+                        <div class="ml-6 text-gray-400 text-sm">No pages yet.</div>
+                    <% } %>
+                </li>
+            <% } %>
+        </ul>
+        <% if (user.role === 'student' && isEnrolled) { %>
+          <div class="mb-4">
+            <p class="text-green-700 font-semibold">Progress: <%= progress %>%</p>
+          </div>
+        <% } %>
+    </div>
+</body>
+</html>

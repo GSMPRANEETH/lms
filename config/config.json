@@ -9,7 +9,7 @@
 	"test": {
 		"username": "postgres",
 		"password": "praneeth",
-		"database": "capstone2_database_test",
+		"database": "capstone2_test",
 		"host": "127.0.0.1",
 		"dialect": "postgres"
 	},

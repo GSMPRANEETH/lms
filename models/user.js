@@ -9,6 +9,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "creatorId",
         as: "createdCourses",
       });
+      User.belongsToMany(models.Courses, {
+        through: "Enrollments",
+        foreignKey: "userId",
+        as: "enrolledCourses",
+      });
     }
   }
 
@@ -41,7 +46,6 @@ module.exports = (sequelize, DataTypes) => {
       modelName: "User",
     }
   );
-
 
   return User;
 };
