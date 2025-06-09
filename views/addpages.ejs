@@ -1,36 +1,38 @@
+<%- include('navbar.ejs', { backUrl: `/addchapters?courseId=${courseId}`, backLabel: 'Back to Chapters' }) %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Add Pages</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.tailwindcss.com"></script>
+  <title>Add Pages | LMS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center">
-    <div class="w-full max-w-lg mt-10 bg-white rounded-lg shadow-lg p-8">
-        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Add Pages</h1>
-        <%- include('notifications.ejs') %>
-        <form action="/addpages" method="POST" class="space-y-5">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-            <input type="hidden" name="courseId" value="<%= courseId %>" />
-            <div>
-                <label for="title" class="block text-gray-700 font-medium mb-1">Title:</label>
-                <input type="text" name="title" id="title" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"/>
-            </div>
-            <div>
-                <label for="content" class="block text-gray-700 font-medium mb-1">Content:</label>
-                <textarea name="content" id="content" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
-            </div>
-            <div>
-                <label for="chapterId" class="block text-gray-700 font-medium mb-1">Chapter:</label>
-                <select name="chapterId" id="chapterId" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <% myChapters.forEach(chapter => { %>
-                        <option value="<%= chapter.id %>"><%= chapter.name %></option>
-                    <% }) %>
-                </select>
-            </div>
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition font-semibold">Create Page</button>
-        </form>
-    </div>
+<body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex flex-col items-center">
+  
+  <div class="w-full max-w-lg mt-10 bg-white rounded-lg shadow-lg p-8">
+    <h1 class="text-2xl font-bold mb-6 text-center text-blue-800">Add Pages</h1>
+    <%- include('notifications.ejs') %>
+    <form action="/addpages" method="POST" class="space-y-5">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <input type="hidden" name="courseId" value="<%= courseId %>" />
+      <div>
+        <label for="title" class="block text-gray-700 font-medium mb-1">Title:</label>
+        <input type="text" name="title" id="title" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+      </div>
+      <div>
+        <label for="content" class="block text-gray-700 font-medium mb-1">Content:</label>
+        <textarea name="content" id="content" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+      </div>
+      <div>
+        <label for="chapterId" class="block text-gray-700 font-medium mb-1">Chapter:</label>
+        <select name="chapterId" id="chapterId" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <% myChapters.forEach(chapter => { %>
+            <option value="<%= chapter.id %>"><%= chapter.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition font-semibold">Create Page</button>
+    </form>
+  </div>
 </body>
 </html>

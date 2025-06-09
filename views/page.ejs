@@ -1,34 +1,25 @@
+<%- include('navbar.ejs', { backUrl: `/courses/${chapter ? chapter.courseId : ''}`, backLabel: 'Back to Course' }) %>
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title><%= page.title %></title>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<script src="https://cdn.tailwindcss.com"></script>
-	</head>
-	<body class="bg-gray-100 min-h-screen flex flex-col items-center">
-		<div class="w-full max-w-lg mt-10 bg-white rounded-lg shadow-lg p-8">
-			<%- include('notifications.ejs') %>
-			<h1 class="text-2xl font-bold mb-4 text-gray-800"><%= page.title %></h1>
-			<p class="mb-2 text-gray-600">
-				Chapter: <%= chapter ? chapter.name : '' %>
-			</p>
-			<div class="mb-6 text-gray-800 whitespace-pre-line">
-				<%= page.content %>
-			</div>
-			<div class="flex justify-between">
-				<a
-					href="/courses/<%= chapter ? chapter.courseId : '' %>"
-					class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-					>Back to Course</a
-				>
-			</div>
-			<% if (user.role === 'student') { %>
-  <form action="/pages/<%= page.id %>/complete" method="POST" class="mt-4">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Mark as Complete</button>
-  </form>
-<% } %>
-		</div>
-	</body>
+<head>
+  <title><%= page.title %> | LMS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex flex-col items-center">
+  <div class="w-full max-w-lg mt-10 bg-white rounded-lg shadow-lg p-8">
+    <%- include('notifications.ejs') %>
+    <h1 class="text-2xl font-bold mb-4 text-blue-800"><%= page.title %></h1>
+    <p class="mb-2 text-gray-600">Chapter: <%= chapter ? chapter.name : '' %></p>
+    <div class="mb-6 text-gray-800 whitespace-pre-line"><%= page.content %></div>
+    
+    <% if (user.role === 'student') { %>
+      <form action="/pages/<%= page.id %>/complete" method="POST" class="mt-4">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Mark as Complete</button>
+      </form>
+    <% } %>
+  </div>
+</body>
 </html>

@@ -1,20 +1,21 @@
+<%- include('navbar.ejs', { backUrl: '/dashboard', backLabel: 'Back to Dashboard' }) %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>My Courses</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.tailwindcss.com"></script>
+  <title>My Courses | LMS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center">
-    <div class="w-full max-w-md mt-10 bg-white rounded-lg shadow-lg p-8">
-        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">My Courses</h1>
-        <%- include('notifications.ejs') %>
-        <ul class="list-disc list-inside space-y-2">
-            <% for (let course of myCourses) { %>
-                <li class="text-gray-800"><a href="/courses/<%= course.id %>"><%= course.name %></a></li>
-            <% } %>
-        </ul>
-    </div>
+<body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex flex-col items-center">
+  <div class="w-full max-w-md mt-10 bg-white rounded-lg shadow-lg p-8">
+    <h1 class="text-2xl font-bold mb-6 text-center text-blue-800">My Courses</h1>
+    <%- include('notifications.ejs') %>
+    <ul class="list-disc list-inside space-y-2">
+      <% for (let course of myCourses) { %>
+        <li class="text-gray-800"><a href="/courses/<%= course.id %>" class="hover:underline"><%= course.name %></a></li>
+      <% } %>
+    </ul>
+  </div>
 </body>
 </html>

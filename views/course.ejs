@@ -1,3 +1,4 @@
+<%- include('navbar.ejs', { backUrl: '/dashboard', backLabel: 'Back to Dashboard' }) %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,12 +13,30 @@
         <%- include('notifications.ejs') %>
         <p class="text-lg font-semibold text-gray-700 mb-2">Course:</p>
         <p class="text-gray-800"><%= course.name %></p>
+                <% if (isEducator) { %>
+          <div class="mb-4 flex space-x-2">
+            <a href="/courses/<%= course.id %>/edit" class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">Edit Course</a>
+            <form action="/courses/<%= course.id %>/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete this course?');" style="display:inline;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Delete Course</button>
+            </form>
+            <a href="/addchapters?courseId=<%= course.id %>" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Add Chapter</a>
+          </div>
+        <% } %>
         <p class="text-lg font-semibold text-gray-700 mb-2">Chapters:</p>
         <ul class="list-disc list-inside space-y-2">
             <% for (let chapter of myChapters) { %>
                 <li class="text-gray-800 mb-2">
                     <div class="font-semibold"><%= chapter.name %></div>
                     <div class="text-sm text-gray-500 ml-4 mb-2"><%= chapter.description %></div>
+                      <% if (isEducator) { %>
+                      <a href="/chapters/<%= chapter.id %>/edit" class="text-yellow-600 hover:underline ml-2">Edit</a>
+                      <form action="/chapters/<%= chapter.id %>/delete" method="POST" onsubmit="return confirm('Delete this chapter?');" style="display:inline;">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="text-red-600 hover:underline ml-2 bg-transparent border-none">Delete</button>
+                      </form>
+                      <a href="/addpages?courseId=<%= course.id %>" class="text-blue-600 hover:underline ml-2">Add Page</a>
+                    <% } %>
                     <% if ((isEducator || isEnrolled) && chapter.Pages && chapter.Pages.length > 0) { %>
                         <ul class="ml-6 list-decimal">
                             <% chapter.Pages.forEach(page => { %>
@@ -27,6 +46,13 @@
                                         <span class="ml-2 text-green-600 text-xs font-semibold">(Completed)</span>
                                     <% } %>
                                 </li>
+                                                                <% if (isEducator) { %>
+                                  <a href="/pages/<%= page.id %>/edit" class="text-yellow-600 hover:underline ml-2">Edit</a>
+                                  <form action="/pages/<%= page.id %>/delete" method="POST" onsubmit="return confirm('Delete this page?');" style="display:inline;">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button type="submit" class="text-red-600 hover:underline ml-2 bg-transparent border-none">Delete</button>
+                                  </form>
+                                <% } %>
                             <% }) %>
                         </ul>
                     <% } else if (chapter.Pages && chapter.Pages.length > 0) { %>
@@ -34,6 +60,7 @@
                     <% } else { %>
                         <div class="ml-6 text-gray-400 text-sm">No pages yet.</div>
                     <% } %>
+                                      
                 </li>
             <% } %>
         </ul>
