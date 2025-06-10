@@ -19,10 +19,23 @@
       </div>
       <div>
         <label for="content" class="block text-gray-700 font-medium mb-1">Content:</label>
-        <textarea id="content" name="content" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"><%= page.content %></textarea>
+        <textarea
+          id="content"
+          name="content"
+          required
+          class="w-full max-w-full min-h-[100px] max-h-[50vh] resize-y px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+          oninput="this.style.height = 'auto'; this.style.height = `${Math.min(this.scrollHeight, window.innerHeight * 0.5)}px`;"
+        ><%= page.content %></textarea>
       </div>
       <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition font-semibold">Update Page</button>
     </form>
   </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const textarea = document.getElementById('content');
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, window.innerHeight * 0.5)}px`;
+    });
+  </script>
 </body>
 </html>

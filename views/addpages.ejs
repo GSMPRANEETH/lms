@@ -8,7 +8,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex flex-col items-center">
-  
   <div class="w-full max-w-lg mt-10 bg-white rounded-lg shadow-lg p-8">
     <h1 class="text-2xl font-bold mb-6 text-center text-blue-800">Add Pages</h1>
     <%- include('notifications.ejs') %>
@@ -21,7 +20,13 @@
       </div>
       <div>
         <label for="content" class="block text-gray-700 font-medium mb-1">Content:</label>
-        <textarea name="content" id="content" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+        <textarea
+          name="content"
+          id="content"
+          required
+          class="w-full max-w-full min-h-[100px] max-h-[50vh] resize-y px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+          oninput="this.style.height = 'auto'; this.style.height = `${Math.min(this.scrollHeight, window.innerHeight * 0.5)}px`;"
+        ><%= typeof page !== 'undefined' && page.content ? page.content : '' %></textarea>
       </div>
       <div>
         <label for="chapterId" class="block text-gray-700 font-medium mb-1">Chapter:</label>
@@ -34,5 +39,12 @@
       <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition font-semibold">Create Page</button>
     </form>
   </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const textarea = document.getElementById('content');
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, window.innerHeight * 0.5)}px`;
+    });
+  </script>
 </body>
 </html>

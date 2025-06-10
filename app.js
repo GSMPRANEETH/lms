@@ -469,7 +469,7 @@ app.post('/chapters/:chapterId/quiz/add', connectEnsureLogin.ensureLoggedIn('/si
         answer: req.body.answer
     });
     req.flash('success', 'Quiz question added!');
-    res.redirect(`/courses/${(await Chapters.findByPk(req.params.chapterId)).courseId}`);
+    res.redirect(`/chapters/${req.params.chapterId}/quiz/edit`);
 });
 
 // (Optional) Delete quiz question
@@ -477,7 +477,7 @@ app.post('/quizquestion/:id/delete', connectEnsureLogin.ensureLoggedIn('/signin'
     const qq = await QuizQuestion.findByPk(req.params.id);
     if (qq) await qq.destroy();
     req.flash('success', 'Quiz question deleted!');
-    res.redirect('/chapters/' + (await Chapters.findByPk(qq.chapterId)).courseId + '/quiz');
+    res.redirect('/chapters/' + qq.chapterId + '/quiz/edit');
 });
 
 // Quiz route
