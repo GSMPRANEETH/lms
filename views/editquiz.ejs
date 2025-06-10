@@ -1,0 +1,37 @@
+<%- include('navbar.ejs', { backUrl: `/courses/${chapterId}`, backLabel: 'Back to Course' }) %>
+<%- include('notifications.ejs') %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Edit Quiz | LMS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex flex-col items-center">
+  <div class="w-full max-w-xl mt-10 bg-white rounded-lg shadow-lg p-8">
+    <h1 class="text-2xl font-bold mb-6 text-blue-800 text-center">Edit Quiz Questions</h1>
+    <% if (questions.length === 0) { %>
+      <div class="mb-4 text-gray-600 text-center">No quiz questions added yet.</div>
+    <% } else { %>
+      <ul class="mb-6 space-y-4">
+        <% questions.forEach(q => { %>
+          <li class="bg-blue-50 rounded p-4 shadow flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <div class="font-semibold text-gray-800 mb-1">Q: <%= q.question %></div>
+              <div class="text-green-700">A: <%= q.answer %></div>
+            </div>
+            <form action="/quizquestion/<%= q.id %>/delete" method="POST" class="mt-2 md:mt-0 md:ml-4">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition">Delete</button>
+            </form>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+    <div class="flex justify-center">
+      <a href="/chapters/<%= chapterId %>/quiz/add" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-semibold transition">Add Question</a>
+    </div>
+  </div>
+</body>
+</html>

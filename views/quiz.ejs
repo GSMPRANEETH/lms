@@ -1,0 +1,43 @@
+<%- include('navbar.ejs', { backUrl: `/courses/${courseId}`, backLabel: 'Back to Course' }) %>
+<%- include('notifications.ejs') %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Quiz | LMS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen flex flex-col items-center">
+  <div class="w-full max-w-xl mt-10 bg-white rounded-lg shadow-lg p-8">
+    <h1 class="text-2xl font-bold mb-6 text-blue-800 text-center">Quiz</h1>
+    <% if (showAnswers) { %>
+      <div class="mb-4 text-red-700 font-semibold">
+        You have reached the maximum number of attempts. The correct answers are shown below.
+      </div>
+      <ul class="mb-4">
+        <% questions.forEach(function(q, idx) { %>
+          <li class="mb-2">
+            <strong><%= idx+1 %>. <%= q.question %></strong><br>
+            <span class="text-green-700">Answer: <%= q.answer %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <form action="/chapters/<%= chapterId %>/quiz" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% questions.forEach(function(q, idx) { %>
+          <div class="mb-4">
+            <p class="font-semibold mb-2"><%= idx+1 %>. <%= q.question %></p>
+            <input type="text" name="q<%= q.id %>" required class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+          </div>
+        <% }) %>
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-semibold">Submit Quiz</button>
+      </form>
+      <% if (attempt) { %>
+        <div class="mt-4 text-gray-700">Attempt: <%= attempt.attempts %> / 3</div>
+      <% } %>
+    <% } %>
+  </div>
+</body>
+</html>

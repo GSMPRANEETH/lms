@@ -11,8 +11,9 @@ const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 const csrf = require("csurf");
 const connectEnsureLogin = require("connect-ensure-login");
+const { Op } = require('sequelize');
 
-const { User, Courses, Chapters, Pages, Enrollments, Completions } = require("./models");
+const { User, Courses, Chapters, Pages, Enrollments, Completions, QuizQuestion, QuizAttempt } = require("./models");
 const saltRounds = 10;
 
 // 📦 Middleware setup
@@ -133,7 +134,7 @@ app.get("/dashboard", connectEnsureLogin.ensureLoggedIn("/signin"), async (req, 
         const enrolledCourseIds = enrolledRows.map(row => row.courseId);
         const enrolledCourses = await Courses.findAll({ where: { id: enrolledCourseIds } });
         const availableCourses = await Courses.findAll({
-            where: { id: { [require('sequelize').Op.notIn]: enrolledCourseIds } }
+            where: { id: { [Op.notIn]: enrolledCourseIds } }
         });
         res.render("dashboard", {
             user: req.user,
@@ -454,6 +455,122 @@ app.post('/pages/:pageId/delete', connectEnsureLogin.ensureLoggedIn('/signin'), 
     res.redirect(`/courses/${course.id}`);
 });
 
+// Show add quiz question form
+app.get('/chapters/:chapterId/quiz/add', connectEnsureLogin.ensureLoggedIn('/signin'), requirePublisher, async (req, res) => {
+    res.render('addquizquestion', { chapterId: req.params.chapterId, csrfToken: req.csrfToken(), user: req.user });
+});
+
+// Handle add quiz question
+app.post('/chapters/:chapterId/quiz/add', connectEnsureLogin.ensureLoggedIn('/signin'), requirePublisher, async (req, res) => {
+    await QuizQuestion.create({
+        chapterId: req.params.chapterId,
+        question: req.body.question,
+        answer: req.body.answer
+    });
+    req.flash('success', 'Quiz question added!');
+    res.redirect(`/courses/${(await Chapters.findByPk(req.params.chapterId)).courseId}`);
+});
+
+// (Optional) Delete quiz question
+app.post('/quizquestion/:id/delete', connectEnsureLogin.ensureLoggedIn('/signin'), requirePublisher, async (req, res) => {
+    const qq = await QuizQuestion.findByPk(req.params.id);
+    if (qq) await qq.destroy();
+    req.flash('success', 'Quiz question deleted!');
+    res.redirect('back');
+});
+
+// Quiz route
+app.get('/chapters/:chapterId/quiz', connectEnsureLogin.ensureLoggedIn('/signin'), async (req, res) => {
+    const chapterId = req.params.chapterId;
+    const questions = await QuizQuestion.findAll({ where: { chapterId } });
+    if (!questions.length) {
+        req.flash('info', 'No quiz for this chapter.');
+        return res.redirect('/dashboard');
+    }
+    const chapter = await Chapters.findByPk(chapterId);
+    if (!chapter) {
+        req.flash('error', 'Chapter not found.');
+        return res.redirect('/dashboard');
+    }
+    const courseId = chapter.courseId;
+    const attempt = await QuizAttempt.findOne({ where: { userId: req.user.id, chapterId } });
+    let showAnswers = false;
+    if (attempt && (attempt.attempts >= 3 || attempt.score === attempt.total)) {
+        showAnswers = true;
+    }
+    res.render('quiz', {
+        questions,
+        chapterId,
+        courseId,
+        csrfToken: req.csrfToken(),
+        user: req.user,
+        attempt,
+        showAnswers
+    });
+});
+
+// Handle quiz submission
+app.post('/chapters/:chapterId/quiz', connectEnsureLogin.ensureLoggedIn('/signin'), async (req, res) => {
+    const chapterId = req.params.chapterId;
+    const userId = req.user.id;
+    const questions = await QuizQuestion.findAll({ where: { chapterId } });
+
+    let [attempt, created] = await QuizAttempt.findOrCreate({
+        where: { userId, chapterId },
+        defaults: { score: 0, total: questions.length, attempts: 0 }
+    });
+
+    if (attempt.attempts >= 3 || attempt.score === attempt.total) {
+        req.flash('error', 'No more attempts allowed. Correct answers are now shown.');
+        return res.redirect(`/chapters/${chapterId}/quiz`);
+    }
+
+    let score = 0;
+    let wrongAnswers = [];
+    questions.forEach(q => {
+        const userAnswer = (req.body[`q${q.id}`] || '').trim().toLowerCase();
+        const correctAnswer = (q.answer || '').trim().toLowerCase();
+        if (userAnswer === correctAnswer) {
+            score++;
+        } else {
+            wrongAnswers.push({ question: q.question, correct: q.answer });
+        }
+    });
+
+    attempt.attempts = (attempt.attempts || 0) + 1;
+    attempt.score = score;
+    attempt.total = questions.length;
+    await attempt.save();
+
+    if (score === questions.length) {
+        req.flash('success', `Quiz submitted! All answers correct! Your score: ${score}/${questions.length}`);
+    } else if (attempt.attempts >= 3) {
+        let answerList = wrongAnswers.map(w => `<li><strong>${w.question}</strong>: ${w.correct}</li>`).join('');
+        req.flash('error', `You have reached 3 attempts. Correct answers:<ul>${answerList}</ul>`);
+    } else {
+        req.flash('error', `Quiz submitted! Your score: ${score}/${questions.length}. You have ${3 - attempt.attempts} attempt(s) left.`);
+    }
+
+    // SAFELY get the chapter and course
+    const chapter = await Chapters.findByPk(chapterId);
+    if (!chapter) {
+        req.flash('error', 'Chapter not found.');
+        return res.redirect('/dashboard');
+    }
+    const courseId = chapter.courseId;
+    if (!courseId) {
+        req.flash('error', 'Course not found.');
+        return res.redirect('/dashboard');
+    }
+    res.redirect(`/courses/${courseId}`);
+});
+
+// Edit quiz page (list, add, delete questions)
+app.get('/chapters/:chapterId/quiz/edit', connectEnsureLogin.ensureLoggedIn('/signin'), requirePublisher, async (req, res) => {
+    const questions = await QuizQuestion.findAll({ where: { chapterId: req.params.chapterId } });
+    res.render('editquiz', { questions, chapterId: req.params.chapterId, csrfToken: req.csrfToken(), user: req.user });
+});
+
 // 📦 Helper functions
 async function getCourse(req) {
     return await Courses.findAll({ where: { creatorId: req.user.id } });
@@ -502,6 +619,18 @@ app.get("/courses/:courseId", connectEnsureLogin.ensureLoggedIn("/signin"), asyn
             progress = allPageIds.length > 0
                 ? Math.round((completedPageIds.length / allPageIds.length) * 100)
                 : 0;
+
+            // New: Check quiz attempts for progress
+            const chapterIds = myChapters.map(ch => ch.id);
+            const quizAttempts = await QuizAttempt.findAll({ where: { userId: req.user.id, chapterId: { [Op.in]: chapterIds } } });
+            const passedChapterIds = quizAttempts.filter(qa => qa.score === qa.total).map(qa => qa.chapterId);
+
+            for (const chapterId of chapterIds) {
+                if (!passedChapterIds.includes(chapterId)) {
+                    progress -= 5; // Deduct 5% for each unpassed quiz
+                }
+            }
+            progress = Math.max(progress, 0); // Ensure progress doesn't go negative
         }
     }
     res.render("course", {
