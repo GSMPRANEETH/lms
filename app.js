@@ -477,7 +477,7 @@ app.post('/quizquestion/:id/delete', connectEnsureLogin.ensureLoggedIn('/signin'
     const qq = await QuizQuestion.findByPk(req.params.id);
     if (qq) await qq.destroy();
     req.flash('success', 'Quiz question deleted!');
-    res.redirect('back');
+    res.redirect('/chapters/' + (await Chapters.findByPk(qq.chapterId)).courseId + '/quiz');
 });
 
 // Quiz route
@@ -567,13 +567,13 @@ app.post('/chapters/:chapterId/quiz', connectEnsureLogin.ensureLoggedIn('/signin
         req.flash('error', 'Course not found.');
         return res.redirect('/dashboard');
     }
-    res.redirect(`/courses/${courseId}`);
+    res.redirect(`/chapters/${chapterId}/quiz`);
 });
 
 // Edit quiz page (list, add, delete questions)
 app.get('/chapters/:chapterId/quiz/edit', connectEnsureLogin.ensureLoggedIn('/signin'), requirePublisher, async (req, res) => {
     const questions = await QuizQuestion.findAll({ where: { chapterId: req.params.chapterId } });
-    res.render('editquiz', { questions, chapterId: req.params.chapterId, csrfToken: req.csrfToken(), user: req.user });
+    res.render('editquiz', { questions, chapterId: req.params.chapterId, courseId: (await Chapters.findByPk(req.params.chapterId)).courseId, csrfToken: req.csrfToken(), user: req.user });
 });
 
 // 📦 Helper functions
