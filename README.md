@@ -62,18 +62,18 @@ Course progress = average of all chapters’ progress.
 
 📸 Screenshots
 Visual walkthrough of key interfaces including dashboard, course builder, student views, and reports.
-![Screenshot (224)](https://github.com/user-attachments/assets/ffb044eb-5cae-4ac5-b20d-9c65be706160)
-![Screenshot (223)](https://github.com/user-attachments/assets/e6448e04-b186-430d-862d-2b5cb77f2b60)
-![Screenshot (222)](https://github.com/user-attachments/assets/fdc8cf43-553f-4c35-9db1-a7c52e8e0d96)
-![Screenshot (221)](https://github.com/user-attachments/assets/62d3d263-c6ca-420a-8141-e9b20889b6e6)
-![Screenshot (220)](https://github.com/user-attachments/assets/fcae8533-434c-416d-8ad5-0092e12f77ea)
-![Screenshot (219)](https://github.com/user-attachments/assets/37a1138c-f5ec-40e7-82d7-e3387cf9d12e)
-![Screenshot (218)](https://github.com/user-attachments/assets/94c15654-6a4d-4f45-9542-64fb45084a53)
-![Screenshot (217)](https://github.com/user-attachments/assets/c18731fa-559f-40c2-a7cf-ebf98f8ab533)
-![Screenshot (216)](https://github.com/user-attachments/assets/8eca5f1f-a1f5-468e-9edf-508466246efd)
-![Screenshot (215)](https://github.com/user-attachments/assets/19fb08d7-1598-4c10-b871-f19ae56d519b)
-![Screenshot (214)](https://github.com/user-attachments/assets/2e72fc0d-bb28-4aff-834d-1afb5c254299)
 ![Screenshot (213)](https://github.com/user-attachments/assets/81766bbd-135a-4179-a12a-972215eddfad)
+![Screenshot (214)](https://github.com/user-attachments/assets/2e72fc0d-bb28-4aff-834d-1afb5c254299)
+![Screenshot (215)](https://github.com/user-attachments/assets/19fb08d7-1598-4c10-b871-f19ae56d519b)
+![Screenshot (216)](https://github.com/user-attachments/assets/8eca5f1f-a1f5-468e-9edf-508466246efd)
+![Screenshot (217)](https://github.com/user-attachments/assets/c18731fa-559f-40c2-a7cf-ebf98f8ab533)
+![Screenshot (218)](https://github.com/user-attachments/assets/94c15654-6a4d-4f45-9542-64fb45084a53)
+![Screenshot (219)](https://github.com/user-attachments/assets/37a1138c-f5ec-40e7-82d7-e3387cf9d12e)
+![Screenshot (220)](https://github.com/user-attachments/assets/fcae8533-434c-416d-8ad5-0092e12f77ea)
+![Screenshot (221)](https://github.com/user-attachments/assets/62d3d263-c6ca-420a-8141-e9b20889b6e6)
+![Screenshot (222)](https://github.com/user-attachments/assets/fdc8cf43-553f-4c35-9db1-a7c52e8e0d96)
+![Screenshot (223)](https://github.com/user-attachments/assets/e6448e04-b186-430d-862d-2b5cb77f2b60)
+![Screenshot (224)](https://github.com/user-attachments/assets/ffb044eb-5cae-4ac5-b20d-9c65be706160)
 
 
 🎥 Demo Video
