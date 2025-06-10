@@ -14,11 +14,13 @@
     <p class="mb-2 text-gray-600">Chapter: <%= chapter ? chapter.name : '' %></p>
     <div class="mb-6 text-gray-800 whitespace-pre-line"><%= page.content %></div>
     
-    <% if (user.role === 'student') { %>
+    <% if (user.role === 'student' && !isCompleted) { %>
       <form action="/pages/<%= page.id %>/complete" method="POST" class="mt-4">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Mark as Complete</button>
       </form>
+    <% } else if (user.role === 'student' && isCompleted) { %>
+      <p class="mt-4 text-green-700 font-semibold">Completed!</p>
     <% } %>
   </div>
 </body>

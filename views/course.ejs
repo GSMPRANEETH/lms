@@ -9,6 +9,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center">
 <div class="w-full max-w-md mt-10 bg-white rounded-lg shadow-lg p-8">
+  <%- include('notifications.ejs') %>
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800"><%= course.name %></h1>
         <% if (isEducator) { %>
@@ -103,30 +104,38 @@
       <% } %>
 
       <!-- Quiz Button Logic -->
-      <div class="mt-2">
-        <% if (isEducator) { %>
-          <a href="/chapters/<%= chapter.id %>/quiz/edit" class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">Edit Quiz</a>
-        <% } else if (user.role === 'student' && isEnrolled) { %>
-          <a href="/chapters/<%= chapter.id %>/quiz" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">Take Quiz</a>
-        <% } %>
-      </div>
+<div class="mt-4"> <!-- increased mt for better spacing from pages -->
+  <% if (isEducator) { %>
+    <a href="/chapters/<%= chapter.id %>/quiz/edit"
+       class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">
+      Edit Quiz
+    </a>
+  <% } else if (user.role === 'student' && isEnrolled) { %>
+    <a href="/chapters/<%= chapter.id %>/quiz"
+       class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+      Take Quiz
+    </a>
+  <% } %>
+</div>
+
     </li>
   <% } %>
 </ul>
 
+<!-- Enrollment or Progress Section -->
+<% if (user.role === 'student' && isEnrolled) { %>
+  <div class="mb-4 mt-10"> <!-- increased mt -->
+    <p class="text-green-700 font-semibold">Progress: <%= progress %>%</p>
+  </div>
+<% } else if (user.role === 'student' && !isEnrolled) { %>
+  <form action="/enroll/<%= course.id %>" method="POST" class="inline mt-10"> <!-- increased mt -->
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-sm">
+      Enroll
+    </button>
+  </form>
+<% } %>
 
-    <% if (user.role === 'student' && isEnrolled) { %>
-      
-        <div class="mb-4 mt-4">
-                    
-            <p class="text-green-700 font-semibold">Progress: <%= progress %>%</p>
-        </div>
-    <% } else if (user.role === 'student' && !isEnrolled) { %>
-        <form action="/enroll/<%= course.id %>" method="POST" class="inline mt-4">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <button type="submit" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-sm">Enroll</button>
-        </form>
-    <% } %>
 
 </div>
 </body>

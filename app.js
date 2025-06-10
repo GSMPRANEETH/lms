@@ -314,6 +314,7 @@ app.get('/pages/:pageId', connectEnsureLogin.ensureLoggedIn('/signin'), async (r
             page,
             chapter,
             course,
+            isCompleted: !!await Completions.findOne({ where: { userId: req.user.id, pageId: page.id } })
         });
     } catch (error) {
         req.flash('error', 'Could not load page.');
@@ -483,16 +484,20 @@ app.post('/quizquestion/:id/delete', connectEnsureLogin.ensureLoggedIn('/signin'
 app.get('/chapters/:chapterId/quiz', connectEnsureLogin.ensureLoggedIn('/signin'), async (req, res) => {
     const chapterId = req.params.chapterId;
     const questions = await QuizQuestion.findAll({ where: { chapterId } });
+    let courseId;
     if (!questions.length) {
+        // Need to get courseId for redirect
+        const chapter = await Chapters.findByPk(chapterId);
+        courseId = chapter ? chapter.courseId : undefined;
         req.flash('info', 'No quiz for this chapter.');
-        return res.redirect('/dashboard');
+        return res.redirect('/courses/' + (courseId || ''));
     }
     const chapter = await Chapters.findByPk(chapterId);
     if (!chapter) {
         req.flash('error', 'Chapter not found.');
         return res.redirect('/dashboard');
     }
-    const courseId = chapter.courseId;
+    courseId = chapter.courseId;
     const attempt = await QuizAttempt.findOne({ where: { userId: req.user.id, chapterId } });
     let showAnswers = false;
     if (attempt && (attempt.attempts >= 3 || attempt.score === attempt.total)) {
@@ -592,47 +597,73 @@ app.get("/courses/:courseId", connectEnsureLogin.ensureLoggedIn("/signin"), asyn
     const courseId = req.params.courseId;
     const course = await Courses.findByPk(courseId);
     if (!course) return res.status(404).send("Course not found");
+
     const myChapters = await Chapters.findAll({
         where: { courseId },
         include: [{ model: Pages }]
     });
+
     const isEducator = req.user.role === 'educator' && course.creatorId === req.user.id;
     let isEnrolled = false;
     let completedPageIds = [];
     let progress = 0;
+
     if (req.user.role === 'student') {
         const enrollment = await Enrollments.findOne({
             where: { userId: req.user.id, courseId }
         });
+
         isEnrolled = !!enrollment;
+
         if (isEnrolled) {
-            const allPages = await Pages.findAll({
-                include: [{ model: Chapters, where: { courseId } }],
-                attributes: ['id']
+            // Fetch all completions for this user
+            const allCompletions = await Completions.findAll({
+                where: { userId: req.user.id }
             });
-            const allPageIds = allPages.map(p => p.id);
-            const completions = await Completions.findAll({
-                where: { userId: req.user.id, pageId: allPageIds },
-                attributes: ['pageId']
+            completedPageIds = allCompletions.map(c => c.pageId);
+
+            // Fetch quiz attempts for this user
+            const quizAttempts = await QuizAttempt.findAll({
+                where: { userId: req.user.id }
             });
-            completedPageIds = completions.map(c => c.pageId);
-            progress = allPageIds.length > 0
-                ? Math.round((completedPageIds.length / allPageIds.length) * 100)
-                : 0;
 
-            // New: Check quiz attempts for progress
-            const chapterIds = myChapters.map(ch => ch.id);
-            const quizAttempts = await QuizAttempt.findAll({ where: { userId: req.user.id, chapterId: { [Op.in]: chapterIds } } });
-            const passedChapterIds = quizAttempts.filter(qa => qa.score === qa.total).map(qa => qa.chapterId);
+            // Compute chapter-level progress
+            let totalChapterProgress = 0;
 
-            for (const chapterId of chapterIds) {
-                if (!passedChapterIds.includes(chapterId)) {
-                    progress -= 5; // Deduct 5% for each unpassed quiz
+            for (const chapter of myChapters) {
+                const pages = chapter.Pages || [];
+                const numPages = pages.length;
+                const quizExists = await QuizQuestion.findOne({ where: { chapterId: chapter.id } });
+
+                const totalItems = numPages + (quizExists ? 1 : 0);
+                if (totalItems === 0) continue; // Avoid division by zero
+
+                let completedCount = 0;
+
+                // Count completed pages
+                for (const page of pages) {
+                    if (completedPageIds.includes(page.id)) completedCount++;
                 }
+
+                // Count passed quiz
+                if (quizExists) {
+                    const quizAttempt = quizAttempts.find(a =>
+                        a.chapterId === chapter.id &&
+                        a.score === a.total
+                    );
+                    if (quizAttempt) completedCount++;
+                }
+
+                const chapterProgress = (completedCount / totalItems) * 100;
+                totalChapterProgress += chapterProgress;
             }
-            progress = Math.max(progress, 0); // Ensure progress doesn't go negative
+
+            progress = myChapters.length > 0
+                ? Math.round(totalChapterProgress / myChapters.length)
+                : 0;
         }
     }
+
     res.render("course", {
         user: req.user,
         csrfToken: req.csrfToken(),
@@ -644,6 +675,8 @@ app.get("/courses/:courseId", connectEnsureLogin.ensureLoggedIn("/signin"), asyn
         completedPageIds
     });
 });
+
+
 
 // Reports
 app.get('/reports', connectEnsureLogin.ensureLoggedIn('/signin'), requirePublisher, async (req, res) => {
